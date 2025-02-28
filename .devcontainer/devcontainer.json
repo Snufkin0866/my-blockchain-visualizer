@@ -1,0 +1,20 @@
+// .devcontainer/devcontainer.json
+{
+  "$schema": "https://json.schemastore.org/devcontainer.json",
+  "name": "My Blockchain DevContainer",
+  "dockerComposeFile": "../docker-compose.yml",
+  "service": "backend",            // アタッチするメインサービス
+  "runServices": ["backend", "frontend"], // 同時に起動したい複数サービス
+  "workspaceFolder": "/app",       // コンテナ内でソースを置くパス
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-azuretools.vscode-docker",
+        "esbenp.prettier-vscode"
+      ],
+      "settings": {}
+    }
+  }
+}
