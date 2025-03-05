@@ -10,7 +10,12 @@ class Transaction(BaseModel):
     to_address: str
     value: float
     timestamp: datetime
-    block_number: Optional[int] = None
+    block_number: int
+    # スマートコントラクト関連のフィールド
+    is_contract_interaction: bool = False
+    contract_address: Optional[str] = None
+    contract_method: Optional[str] = None
+    contract_input_data: Optional[str] = None
 
     class Config:
         orm_mode = True

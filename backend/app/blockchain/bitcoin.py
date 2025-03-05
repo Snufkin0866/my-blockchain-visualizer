@@ -6,6 +6,7 @@ from ..api.blockcypher import BlockCypherClient
 from ..schemas import Transaction as TransactionSchema
 from .base import BlockchainService
 from ..config import BLOCKCYPHER_BASE_URL, BLOCKCYPHER_API_KEY
+from ..database.models import Transaction
 
 
 class BitcoinService(BlockchainService):

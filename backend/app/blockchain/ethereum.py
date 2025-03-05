@@ -7,6 +7,7 @@ from ..api.etherscan import EtherscanClient
 from ..schemas import Transaction as TransactionSchema
 from .base import BlockchainService
 from ..config import ETHERSCAN_BASE_URL, ETHERSCAN_API_KEY
+from ..database.models import Transaction
 
 logger = logging.getLogger(__name__)
 

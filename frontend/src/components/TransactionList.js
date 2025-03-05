@@ -52,6 +52,7 @@ const TransactionList = ({
                 <TableCell>送信元</TableCell>
                 <TableCell>送信先</TableCell>
                 <TableCell align="right">金額</TableCell>
+                <TableCell>コントラクト情報</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -137,6 +138,21 @@ const TransactionList = ({
                           variant="outlined"
                         />
                       </Stack>
+                    </TableCell>
+                    <TableCell>
+                      {tx.is_contract_interaction && (
+                        <Stack direction="column" spacing={0.5}>
+                          <Typography variant="body2" color="primary">
+                            スマートコントラクト
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            アドレス: {tx.contract_address}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            メソッド: {tx.contract_method}
+                          </Typography>
+                        </Stack>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}

@@ -4,7 +4,7 @@ from datetime import datetime
 from sqlalchemy.orm import Session
 from sqlalchemy import and_
 
-from ..models import Transaction
+from ..database.models import Transaction
 from ..schemas import Transaction as TransactionSchema
 
 

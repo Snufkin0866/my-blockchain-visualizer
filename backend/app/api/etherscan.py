@@ -2,6 +2,7 @@ from typing import Dict, Any, List, Optional
 from datetime import datetime
 from fastapi import HTTPException
 import logging
+import json
 
 from .base import BlockchainApiClient
 
@@ -59,7 +60,10 @@ class EtherscanClient(BlockchainApiClient):
             is_outgoing = address.lower() == tx.get("from", "").lower()
             
             if is_incoming or is_outgoing:
-                transactions.append({
+                # スマートコントラクトの情報を取得
+                contract_info = self._get_contract_info(tx)
+                
+                transaction = {
                     "blockchain": "ethereum",
                     "txid": tx.get("hash"),
                     "from_address": tx.get("from"),
@@ -67,7 +71,44 @@ class EtherscanClient(BlockchainApiClient):
                     "value": float(tx.get("value", 0)) / 1e18,  # wei to ETH
                     "timestamp": tx_time,
                     "block_number": int(tx.get("blockNumber", 0)),
-                })
+                    **contract_info
+                }
+                
+                transactions.append(transaction)
         
         logger.info(f"Processed {len(transactions)} transactions for address: {address}")
         return transactions
+        
+    def _get_contract_info(self, tx: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        トランザクションからスマートコントラクトの情報を抽出
+        """
+        # 入力データが空でない場合、スマートコントラクトとの相互作用とみなす
+        input_data = tx.get("input", "")
+        if not input_data or input_data == "0x":
+            return {
+                "is_contract_interaction": False,
+                "contract_address": None,
+                "contract_method": None,
+                "contract_input_data": None
+            }
+            
+        # スマートコントラクトアドレスを取得
+        contract_address = tx.get("to")
+        if not contract_address:
+            return {
+                "is_contract_interaction": False,
+                "contract_address": None,
+                "contract_method": None,
+                "contract_input_data": None
+            }
+            
+        # メソッドシグネチャを取得（最初の4バイト）
+        method_signature = input_data[:10] if len(input_data) >= 10 else None
+        
+        return {
+            "is_contract_interaction": True,
+            "contract_address": contract_address,
+            "contract_method": method_signature,
+            "contract_input_data": input_data
+        }

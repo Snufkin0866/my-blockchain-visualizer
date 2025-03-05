@@ -5,12 +5,12 @@ import {
   Box,
   Paper,
   Grid,
+  TextField,
 } from "@mui/material";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { ja } from "date-fns/locale";
 import { getNetwork } from "../services/api";
-import axios from 'axios';
 
 // インポートしたコンポーネント
 import SearchForm from "../components/SearchForm";
@@ -28,6 +28,7 @@ const NetworkVisualization = () => {
   const [startDate, setStartDate] = useState(firstDayOfCurrentMonth);
   const [endDate, setEndDate] = useState(new Date());
   const [depth, setDepth] = useState(1);
+  const [minAmount, setMinAmount] = useState("");
   const [network, setNetwork] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -79,7 +80,8 @@ const NetworkVisualization = () => {
         address,
         depth,
         startDate,
-        endDate
+        endDate,
+        minAmount ? parseFloat(minAmount) : undefined
       );
       console.log("取得データ:", data);
 
@@ -114,7 +116,7 @@ const NetworkVisualization = () => {
         nodes: processedNodes,
         links: processedLinks,
       };
-      
+
       console.log("処理済みデータ:", preparedData);
       setNetwork(preparedData);
       setNetworkData(preparedData);
@@ -155,6 +157,17 @@ const NetworkVisualization = () => {
           loading={loading}
           error={error}
         />
+
+        <Box sx={{ mt: 2, mb: 2 }}>
+          <TextField
+            label="最小取引金額"
+            type="number"
+            value={minAmount}
+            onChange={(e) => setMinAmount(e.target.value)}
+            helperText={`${blockchain === "bitcoin" ? "BTC" : "ETH"}単位で入力してください`}
+            sx={{ width: 200 }}
+          />
+        </Box>
 
         {network && network.nodes && network.nodes.length > 0 ? (
           <Box sx={{ mt: 4 }}>

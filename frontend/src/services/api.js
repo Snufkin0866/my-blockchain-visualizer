@@ -40,9 +40,10 @@ export const getTransactions = async (
 export const getNetwork = async (
   blockchain,
   address,
-  depth = 1,
+  depth,
   startDate,
-  endDate
+  endDate,
+  minAmount
 ) => {
   console.log("API呼び出し開始:", {
     blockchain,
@@ -64,6 +65,7 @@ export const getNetwork = async (
       depth,
       ...(formattedStartDate && { start_date: formattedStartDate }),
       ...(formattedEndDate && { end_date: formattedEndDate }),
+      ...(minAmount && { min_amount: minAmount.toString() }),
     };
 
     console.log(

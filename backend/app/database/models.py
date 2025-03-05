@@ -1,5 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey
-from sqlalchemy.orm import relationship
+from sqlalchemy import Column, Integer, String, Float, DateTime, Boolean
 
 from .database import Base
 
@@ -16,3 +15,8 @@ class Transaction(Base):
     value = Column(Float)
     timestamp = Column(DateTime, index=True)
     block_number = Column(Integer)
+    # スマートコントラクト関連のフィールド
+    is_contract_interaction = Column(Boolean, default=False)
+    contract_address = Column(String, index=True, nullable=True)
+    contract_method = Column(String, nullable=True)
+    contract_input_data = Column(String, nullable=True)

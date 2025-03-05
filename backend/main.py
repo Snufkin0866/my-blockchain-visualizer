@@ -6,7 +6,8 @@ from datetime import datetime
 from dateutil import parser
 import logging
 
-from app import models, schemas, database
+from app.database import models, database
+from app import schemas
 from app.blockchain import BitcoinService, EthereumService
 from app.config import CORS_ORIGINS, DEBUG
 
@@ -120,6 +121,7 @@ def get_transaction_network(
     depth: int = Query(1, ge=1, le=3),
     start_date: str = Query(None),
     end_date: str = Query(None),
+    min_amount: float = Query(None),
     db: Session = Depends(get_db),
 ):
     """
@@ -129,8 +131,9 @@ def get_transaction_network(
     - depth: 探索する深さ（1〜3）
     - start_date: 開始日 (ISO形式)
     - end_date: 終了日 (ISO形式)
+    - min_amount: 最小取引金額（この金額以上のトランザクションのみを表示）
     """
-    logger.info(f"Fetching transaction network for blockchain: {blockchain}, address: {address}, depth: {depth}, start_date: {start_date}, end_date: {end_date}")
+    logger.info(f"Fetching transaction network for blockchain: {blockchain}, address: {address}, depth: {depth}, start_date: {start_date}, end_date: {end_date}, min_amount: {min_amount}")
     if blockchain not in ["bitcoin", "ethereum"]:
         raise HTTPException(
             status_code=400, detail="Supported blockchains are 'bitcoin' and 'ethereum'"
@@ -185,6 +188,10 @@ def get_transaction_network(
             )
 
             for tx in transactions:
+                # 最小金額でフィルタリング
+                if min_amount is not None and tx.value < min_amount:
+                    continue
+
                 # 送信元
                 if tx.from_address not in explored_addresses:
                     network.nodes.append(
