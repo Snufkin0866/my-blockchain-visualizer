@@ -19,7 +19,8 @@ class BitcoinService(BlockchainService):
         self.client = BlockCypherClient(BLOCKCYPHER_BASE_URL, BLOCKCYPHER_API_KEY)
     
     def get_transactions(self, address: str, start_datetime: Optional[datetime] = None,
-                        end_datetime: Optional[datetime] = None, db: Session = None) -> List[TransactionSchema]:
+                        end_datetime: Optional[datetime] = None, db: Session = None,
+                        depth: Optional[int] = None) -> List[TransactionSchema]:
         """
         Bitcoinトランザクションの取得と処理
         """
@@ -30,12 +31,13 @@ class BitcoinService(BlockchainService):
                 address=address,
                 start_datetime=start_datetime,
                 end_datetime=end_datetime,
-                db=db
+                db=db,
+                depth=depth
             )
             
             # キャッシュデータが存在する場合は、それをそのまま返す
             if cached_transactions:
-                print(f"Using cached transactions for address: {address}")
+                print(f"Using cached transactions for address: {address} with depth: {depth}")
                 return self.format_transactions(cached_transactions)
         
         # キャッシュがない場合はAPIからトランザクションを取得
@@ -48,7 +50,7 @@ class BitcoinService(BlockchainService):
         
         # データベースに保存
         if db:
-            db_transactions = self.save_transactions_to_db(raw_transactions, db)
+            db_transactions = self.save_transactions_to_db(raw_transactions, db, depth)
             # データベースから取得したトランザクションをスキーマに変換して返す
             return self.format_transactions(db_transactions)
         

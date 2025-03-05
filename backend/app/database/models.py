@@ -15,6 +15,8 @@ class Transaction(Base):
     value = Column(Float)
     timestamp = Column(DateTime, index=True)
     block_number = Column(Integer)
+    # 探索深度の記録（キャッシュ判断に使用）
+    fetch_depth = Column(Integer, nullable=True)
     # スマートコントラクト関連のフィールド
     is_contract_interaction = Column(Boolean, default=False)
     contract_address = Column(String, index=True, nullable=True)

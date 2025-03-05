@@ -21,11 +21,12 @@ class EthereumService(BlockchainService):
         self.client = EtherscanClient(ETHERSCAN_BASE_URL, ETHERSCAN_API_KEY)
     
     def get_transactions(self, address: str, start_datetime: Optional[datetime] = None,
-                        end_datetime: Optional[datetime] = None, db: Session = None) -> List[TransactionSchema]:
+                        end_datetime: Optional[datetime] = None, db: Session = None,
+                        depth: Optional[int] = None) -> List[TransactionSchema]:
         """
         Ethereumトランザクションの取得と処理
         """
-        logger.info(f"Fetching transactions for address: {address}, start_datetime: {start_datetime}, end_datetime: {end_datetime}")
+        logger.info(f"Fetching transactions for address: {address}, start_datetime: {start_datetime}, end_datetime: {end_datetime}, depth: {depth}")
         # データベースからキャッシュされたトランザクションを取得
         cached_transactions = []
         if db:
@@ -33,12 +34,13 @@ class EthereumService(BlockchainService):
                 address=address,
                 start_datetime=start_datetime,
                 end_datetime=end_datetime,
-                db=db
+                db=db,
+                depth=depth
             )
             
             # キャッシュデータが存在する場合は、それをそのまま返す
             if cached_transactions:
-                logger.info(f"Using cached transactions for address: {address}")
+                logger.info(f"Using cached transactions for address: {address} with depth: {depth}")
                 return self.format_transactions(cached_transactions)
                 
         # キャッシュがない場合はAPIからトランザクションを取得
@@ -51,8 +53,8 @@ class EthereumService(BlockchainService):
         
         # データベースに保存
         if db:
-            db_transactions = self.save_transactions_to_db(raw_transactions, db)
-            logger.info(f"Saved {len(db_transactions)} transactions to database for address: {address}")
+            db_transactions = self.save_transactions_to_db(raw_transactions, db, depth)
+            logger.info(f"Saved {len(db_transactions)} transactions to database for address: {address} with depth: {depth}")
             # データベースから取得したトランザクションをスキーマに変換して返す
             return self.format_transactions(db_transactions)
         

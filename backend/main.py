@@ -108,7 +108,8 @@ def get_transactions(
         address=address,
         start_datetime=start_datetime,
         end_datetime=end_datetime,
-        db=db
+        db=db,
+        depth=1  # 通常のトランザクション取得では深度1として扱う
     )
     logger.info(f"Fetched {len(transactions)} transactions for address: {address}")
     return transactions
@@ -185,6 +186,7 @@ def get_transaction_network(
                 start_datetime=start_datetime,
                 end_datetime=end_datetime,
                 db=db,
+                depth=depth,  # 探索深度を渡す
             )
 
             for tx in transactions:

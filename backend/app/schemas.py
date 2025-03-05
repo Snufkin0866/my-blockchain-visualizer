@@ -11,6 +11,8 @@ class Transaction(BaseModel):
     value: float
     timestamp: datetime
     block_number: int
+    # 探索深度の記録
+    fetch_depth: Optional[int] = None
     # スマートコントラクト関連のフィールド
     is_contract_interaction: bool = False
     contract_address: Optional[str] = None
