@@ -158,15 +158,18 @@ def get_transaction_network(
         except ValueError:
             raise HTTPException(status_code=400, detail="Invalid end_date format")
 
+    # アドレスを小文字に正規化
+    normalized_address = address.lower()
+    
     # 初期ネットワーク構造
     network = schemas.TransactionNetwork(
-        nodes=[schemas.NetworkNode(id=address, label=address, type="source")], links=[]
+        nodes=[schemas.NetworkNode(id=normalized_address, label=address, type="source")], links=[]
     )
 
-    # 探索済みアドレス
-    explored_addresses = set([address])
+    # 探索済みアドレス（小文字に正規化）
+    explored_addresses = set([normalized_address])
     # 探索予定アドレス（深さごと）
-    to_explore = {0: [address]}
+    to_explore = {0: [normalized_address]}
     
     # 適切なブロックチェーンサービスを取得
     blockchain_service = get_blockchain_service(blockchain)
@@ -194,35 +197,39 @@ def get_transaction_network(
                 if min_amount is not None and tx.value < min_amount:
                     continue
 
+                # アドレスを小文字に正規化
+                from_address_normalized = tx.from_address.lower()
+                to_address_normalized = tx.to_address.lower()
+                
                 # 送信元
-                if tx.from_address not in explored_addresses:
+                if from_address_normalized not in explored_addresses:
                     network.nodes.append(
                         schemas.NetworkNode(
-                            id=tx.from_address, label=tx.from_address, type="address"
+                            id=from_address_normalized, label=tx.from_address, type="address"
                         )
                     )
-                    explored_addresses.add(tx.from_address)
+                    explored_addresses.add(from_address_normalized)
                     if next_depth < depth:
-                        to_explore[next_depth].append(tx.from_address)
+                        to_explore[next_depth].append(from_address_normalized)
 
                 # 送信先
-                if tx.to_address not in explored_addresses:
+                if to_address_normalized not in explored_addresses:
                     network.nodes.append(
                         schemas.NetworkNode(
-                            id=tx.to_address, label=tx.to_address, type="address"
+                            id=to_address_normalized, label=tx.to_address, type="address"
                         )
                     )
-                    explored_addresses.add(tx.to_address)
+                    explored_addresses.add(to_address_normalized)
                     if next_depth < depth:
-                        to_explore[next_depth].append(tx.to_address)
+                        to_explore[next_depth].append(to_address_normalized)
 
                 # リンク（各トランザクションごとに独自のリンク）
-                link_id = f"{tx.from_address}_{tx.to_address}_{tx.txid}"
+                link_id = f"{from_address_normalized}_{to_address_normalized}_{tx.txid}"
                 network.links.append(
                     schemas.NetworkLink(
                         id=link_id,
-                        source=tx.from_address,
-                        target=tx.to_address,
+                        source=from_address_normalized,
+                        target=to_address_normalized,
                         value=tx.value,
                         timestamp=tx.timestamp,
                     )

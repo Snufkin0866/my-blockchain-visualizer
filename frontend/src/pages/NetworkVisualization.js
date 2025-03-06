@@ -99,8 +99,7 @@ const NetworkVisualization = () => {
         // ノードタイプに基づいて初期配置を設定
         x: node.type === "source" ? 0 : Math.random() * 100 - 50,
         y: node.type === "source" ? 0 : Math.random() * 100 - 50,
-      }));
-
+      }));      
       // リンクのsourceとtargetが確実に文字列IDを参照するよう修正
       const processedLinks = data.links.map((link) => ({
         ...link,

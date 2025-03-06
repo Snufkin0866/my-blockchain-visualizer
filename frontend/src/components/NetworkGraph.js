@@ -70,6 +70,7 @@ const NetworkGraph = ({
     if (network && network.nodes && network.nodes.length > 0 && fgRef.current) {
       // 少し遅延を入れて確実にレンダリングが完了した後に実行
       const timer = setTimeout(() => {
+        // 中心ノードを探す（タイプが "source" のノード）
         const sourceNode = network.nodes.find(node => node.type === "source");
         if (sourceNode && fgRef.current) {
           fgRef.current.centerAt(sourceNode.x || 0, sourceNode.y || 0, 1000);
@@ -133,6 +134,7 @@ const NetworkGraph = ({
         onEngineStop={() => {
           // グラフの描画が完了したら中心ノードにフォーカス
           if (network && network.nodes) {
+            // 中心ノードを探す（タイプが "source" のノード）
             const sourceNode = network.nodes.find(
               (node) => node.type === "source"
             );
