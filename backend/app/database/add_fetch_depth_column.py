@@ -6,14 +6,14 @@ import os
 # 親ディレクトリをパスに追加して、appモジュールをインポートできるようにする
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-from app.database.database import SQLALCHEMY_DATABASE_URL
+from app.database.database import DATABASE_URL
 
 def add_fetch_depth_column():
     """
     既存のtransactionsテーブルにfetch_depth列を追加するマイグレーションスクリプト
     """
     print("データベースに接続中...")
-    engine = create_engine(SQLALCHEMY_DATABASE_URL)
+    engine = create_engine(DATABASE_URL)
     
     # メタデータを取得
     metadata = MetaData()
