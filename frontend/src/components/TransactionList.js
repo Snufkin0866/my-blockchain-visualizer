@@ -9,6 +9,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  TableFooter,
   TablePagination,
   Stack,
   Chip,
@@ -97,7 +98,7 @@ const TransactionList = ({
                           whiteSpace: "nowrap",
                         }}
                         color={
-                          tx.from_address === address
+                          tx.from_address.toLowerCase() === address.toLowerCase()
                             ? "primary"
                             : "text.primary"
                         }
@@ -115,7 +116,9 @@ const TransactionList = ({
                           whiteSpace: "nowrap",
                         }}
                         color={
-                          tx.to_address === address ? "primary" : "text.primary"
+                          tx.to_address.toLowerCase() === address.toLowerCase() 
+                            ? "primary" 
+                            : "text.primary"
                         }
                       >
                         {tx.to_address}
@@ -156,7 +159,38 @@ const TransactionList = ({
                     </TableCell>
                   </TableRow>
                 ))}
-            </TableBody>
+              </TableBody>
+              <TableFooter>
+                <TableRow>
+                  <TableCell colSpan={4} align="right">
+                    <Typography variant="subtitle1" fontWeight="bold">
+                      表示中の合計金額:
+                    </Typography>
+                  </TableCell>
+                  <TableCell align="right">
+                    <Stack
+                      direction="row"
+                      spacing={1}
+                      justifyContent="flex-end"
+                      alignItems="center"
+                    >
+                      <Typography variant="subtitle1" fontWeight="bold">
+                        {transactions
+                          .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                          .reduce((sum, tx) => sum + tx.value, 0)
+                          .toFixed(8)}
+                      </Typography>
+                      <Chip
+                        size="small"
+                        label={blockchain === "bitcoin" ? "BTC" : "ETH"}
+                        color="secondary"
+                        variant="outlined"
+                      />
+                    </Stack>
+                  </TableCell>
+                  <TableCell></TableCell>
+                </TableRow>
+              </TableFooter>
           </Table>
         </TableContainer>
         <TablePagination

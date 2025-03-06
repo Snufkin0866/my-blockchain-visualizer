@@ -79,9 +79,9 @@ const TransactionExplorer = () => {
       return;
     }
 
-    // 送金と受領のトランザクションを分類
-    const sent = txs.filter((tx) => tx.from_address === address);
-    const received = txs.filter((tx) => tx.to_address === address);
+    // 送金と受領のトランザクションを分類（大文字小文字を区別せずに比較）
+    const sent = txs.filter((tx) => tx.from_address.toLowerCase() === address.toLowerCase());
+    const received = txs.filter((tx) => tx.to_address.toLowerCase() === address.toLowerCase());
 
     // 合計金額の計算
     const totalSent = sent.reduce((sum, tx) => sum + tx.value, 0);
