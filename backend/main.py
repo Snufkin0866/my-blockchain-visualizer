@@ -64,6 +64,7 @@ def get_transactions(
     address: str,
     start_date: str = Query(None),
     end_date: str = Query(None),
+    second_address: str = Query(None),
     db: Session = Depends(get_db),
 ):
     """
@@ -72,13 +73,24 @@ def get_transactions(
     - address: ウォレットアドレス
     - start_date: 開始日 (ISO形式: YYYY-MM-DD)
     - end_date: 終了日 (ISO形式: YYYY-MM-DD)
+    - second_address: 特定のアドレスとの間のトランザクションのみを取得する場合に指定
     """
-    logger.info(f"Fetching transactions for blockchain: {blockchain}, address: {address}, start_date: {start_date}, end_date: {end_date}")
+    logger.info(f"Fetching transactions for blockchain: {blockchain}, address: {address}, start_date: {start_date}, end_date: {end_date}, second_address: {second_address}")
     # パラメータの検証
     if blockchain not in ["bitcoin", "ethereum"]:
         raise HTTPException(
             status_code=400, detail="Supported blockchains are 'bitcoin' and 'ethereum'"
         )
+        
+    # 第二アドレスの検証（指定されている場合）
+    if second_address and blockchain == "bitcoin":
+        # 適切なブロックチェーンサービスを取得して検証
+        blockchain_service = get_blockchain_service(blockchain)
+        if hasattr(blockchain_service, 'validate_bitcoin_address') and not blockchain_service.validate_bitcoin_address(second_address):
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid Bitcoin address format for second_address: {second_address}"
+            )
 
     # 日付パラメータの処理
     start_datetime = None
@@ -111,6 +123,18 @@ def get_transactions(
         db=db,
         depth=1  # 通常のトランザクション取得では深度1として扱う
     )
+    
+    # 特定のアドレスとの間のトランザクションのみをフィルタリング
+    if second_address:
+        second_address_lower = second_address.lower()
+        filtered_transactions = [
+            tx for tx in transactions 
+            if (tx.from_address.lower() == second_address_lower and tx.to_address.lower() == address.lower()) or
+               (tx.from_address.lower() == address.lower() and tx.to_address.lower() == second_address_lower)
+        ]
+        logger.info(f"Filtered to {len(filtered_transactions)} transactions between {address} and {second_address}")
+        return filtered_transactions
+    
     logger.info(f"Fetched {len(transactions)} transactions for address: {address}")
     return transactions
 
@@ -123,6 +147,7 @@ def get_transaction_network(
     start_date: str = Query(None),
     end_date: str = Query(None),
     min_amount: float = Query(None),
+    second_address: str = Query(None),
     db: Session = Depends(get_db),
 ):
     """
@@ -134,11 +159,21 @@ def get_transaction_network(
     - end_date: 終了日 (ISO形式)
     - min_amount: 最小取引金額（この金額以上のトランザクションのみを表示）
     """
-    logger.info(f"Fetching transaction network for blockchain: {blockchain}, address: {address}, depth: {depth}, start_date: {start_date}, end_date: {end_date}, min_amount: {min_amount}")
+    logger.info(f"Fetching transaction network for blockchain: {blockchain}, address: {address}, depth: {depth}, start_date: {start_date}, end_date: {end_date}, min_amount: {min_amount}, second_address: {second_address}")
     if blockchain not in ["bitcoin", "ethereum"]:
         raise HTTPException(
             status_code=400, detail="Supported blockchains are 'bitcoin' and 'ethereum'"
         )
+        
+    # 第二アドレスの検証（指定されている場合）
+    if second_address and blockchain == "bitcoin":
+        # 適切なブロックチェーンサービスを取得して検証
+        blockchain_service = get_blockchain_service(blockchain)
+        if hasattr(blockchain_service, 'validate_bitcoin_address') and not blockchain_service.validate_bitcoin_address(second_address):
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid Bitcoin address format for second_address: {second_address}"
+            )
 
     # 日付パラメータの処理
     start_datetime = None
@@ -183,14 +218,19 @@ def get_transaction_network(
             to_explore[next_depth] = []
 
         for current_address in to_explore[current_depth]:
-            # このアドレスの取引を取得
-            transactions = blockchain_service.get_transactions(
-                address=current_address,
-                start_datetime=start_datetime,
-                end_datetime=end_datetime,
-                db=db,
-                depth=depth,  # 探索深度を渡す
-            )
+            try:
+                # このアドレスの取引を取得
+                transactions = blockchain_service.get_transactions(
+                    address=current_address,
+                    start_datetime=start_datetime,
+                    end_datetime=end_datetime,
+                    db=db,
+                    depth=depth,  # 探索深度を渡す
+                )
+            except HTTPException as e:
+                # アドレス検証エラーなどの場合はスキップして次のアドレスへ
+                logger.warning(f"Error fetching transactions for address {current_address}: {e.detail}")
+                continue
 
             for tx in transactions:
                 # 最小金額でフィルタリング
@@ -234,5 +274,43 @@ def get_transaction_network(
                         timestamp=tx.timestamp,
                     )
                 )
+    # 特定のアドレスとの間のトランザクションのみをフィルタリング
+    if second_address:
+        second_address_normalized = second_address.lower()
+        
+        # second_addressがノードに含まれていない場合は追加
+        if second_address_normalized not in explored_addresses:
+            network.nodes.append(
+                schemas.NetworkNode(
+                    id=second_address_normalized, label=second_address, type="focus"
+                )
+            )
+            explored_addresses.add(second_address_normalized)
+        else:
+            # 既存のノードのタイプを変更
+            for node in network.nodes:
+                if node.id == second_address_normalized:
+                    node.type = "focus"
+                    break
+        
+        # 中心アドレスと指定アドレス間のリンクのみをフィルタリング
+        filtered_links = [
+            link for link in network.links
+            if (link.source == normalized_address and link.target == second_address_normalized) or
+               (link.source == second_address_normalized and link.target == normalized_address)
+        ]
+        
+        # 関連するノードのみを保持
+        relevant_nodes = {normalized_address, second_address_normalized}
+        
+        # フィルタリングされたネットワークを作成
+        filtered_network = schemas.TransactionNetwork(
+            nodes=[node for node in network.nodes if node.id in relevant_nodes],
+            links=filtered_links
+        )
+        
+        logger.info(f"Filtered network to {len(filtered_network.nodes)} nodes and {len(filtered_network.links)} links between {address} and {second_address}")
+        return filtered_network
+    
     logger.info(f"Fetched network with {len(network.nodes)} nodes and {len(network.links)} links for address: {address}")
     return network

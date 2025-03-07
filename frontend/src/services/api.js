@@ -37,6 +37,76 @@ export const getTransactions = async (
   }
 };
 
+export const getTransactionsBetweenAddresses = async (
+  blockchain,
+  address1,
+  address2,
+  startDate,
+  endDate
+) => {
+  try {
+    const formattedStartDate = startDate
+      ? format(new Date(startDate), "yyyy-MM-dd")
+      : "";
+    const formattedEndDate = endDate
+      ? format(new Date(endDate), "yyyy-MM-dd")
+      : "";
+
+    const params = {
+      ...(formattedStartDate && { start_date: formattedStartDate }),
+      ...(formattedEndDate && { end_date: formattedEndDate }),
+      second_address: address2
+    };
+
+    const url = `/transactions/${blockchain}/${address1}`;
+    console.log("APIリクエスト (アドレス間トランザクション):", `${API_URL}${url}`);
+    console.log("APIリクエストパラメータ:", params);
+
+    const response = await api.get(url, { params });
+    return response.data;
+  } catch (error) {
+    console.error("APIエラー (アドレス間トランザクション):", error);
+    console.error("エラー詳細:", error.response?.data || error.message);
+    throw error;
+  }
+};
+
+export const getNetworkBetweenAddresses = async (
+  blockchain,
+  address1,
+  address2,
+  startDate,
+  endDate,
+  minAmount
+) => {
+  try {
+    const formattedStartDate = startDate
+      ? format(new Date(startDate), "yyyy-MM-dd")
+      : "";
+    const formattedEndDate = endDate
+      ? format(new Date(endDate), "yyyy-MM-dd")
+      : "";
+
+    const params = {
+      ...(formattedStartDate && { start_date: formattedStartDate }),
+      ...(formattedEndDate && { end_date: formattedEndDate }),
+      ...(minAmount && { min_amount: minAmount.toString() }),
+      second_address: address2
+    };
+
+    const url = `/network/${blockchain}/${address1}`;
+    console.log("APIリクエスト (アドレス間ネットワーク):", `${API_URL}${url}`);
+    console.log("APIリクエストパラメータ:", params);
+
+    const response = await api.get(url, { params });
+    return response.data;
+  } catch (error) {
+    console.error("APIエラー (アドレス間ネットワーク):", error);
+    console.error("エラー詳細:", error.response?.data || error.message);
+    throw error;
+  }
+};
+
 export const getNetwork = async (
   blockchain,
   address,
@@ -68,16 +138,11 @@ export const getNetwork = async (
       ...(minAmount && { min_amount: minAmount.toString() }),
     };
 
-    console.log(
-      "APIリクエストURL:",
-      `${API_URL}/network/${blockchain}/${address}`
-    );
+    const url = `/network/${blockchain}/${address}`;
+    console.log("APIリクエストURL:", `${API_URL}${url}`);
     console.log("APIリクエストパラメータ:", params);
 
-    const response = await api.get(
-      `${API_URL}/network/${blockchain}/${address}`,
-      { params }
-    );
+    const response = await api.get(url, { params });
     console.log("API応答:", response.data);
 
     return response.data;

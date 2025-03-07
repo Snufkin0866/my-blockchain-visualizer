@@ -7,7 +7,7 @@ import {
   Stack,
 } from "@mui/material";
 
-const NetworkInfo = ({ network, address, depth }) => {
+const NetworkInfo = ({ network, address, depth, visualizationMode = "center" }) => {
   return (
     <Card>
       <CardContent>
@@ -50,6 +50,14 @@ const NetworkInfo = ({ network, address, depth }) => {
               探索の深さ
             </Typography>
             <Typography variant="body1">{depth}</Typography>
+          </Box>
+          <Box>
+            <Typography variant="body2" color="text.secondary">
+              表示形式
+            </Typography>
+            <Typography variant="body1">
+              {visualizationMode === "center" ? "中心配置" : "階層配置"}
+            </Typography>
           </Box>
           <Box>
             <Typography variant="body2" color="text.secondary">

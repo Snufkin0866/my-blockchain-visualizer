@@ -1,6 +1,8 @@
 from typing import List, Optional
 from datetime import datetime
 from sqlalchemy.orm import Session
+import re
+from fastapi import HTTPException
 
 from ..api.blockcypher import BlockCypherClient
 from ..schemas import Transaction as TransactionSchema
@@ -17,6 +19,24 @@ class BitcoinService(BlockchainService):
         super().__init__("bitcoin")
         # 設定ファイルからAPIのURLとAPIキーを取得
         self.client = BlockCypherClient(BLOCKCYPHER_BASE_URL, BLOCKCYPHER_API_KEY)
+        
+    def validate_bitcoin_address(self, address: str) -> bool:
+        """
+        Bitcoinアドレスの基本的な検証を行う
+        """
+        # Legacy addressフォーマット (P2PKH): 1で始まる
+        p2pkh_pattern = r'^1[a-km-zA-HJ-NP-Z1-9]{25,34}$'
+        
+        # P2SH addressフォーマット: 3で始まる
+        p2sh_pattern = r'^3[a-km-zA-HJ-NP-Z1-9]{25,34}$'
+        
+        # Bech32 addressフォーマット (SegWit): bc1で始まる
+        bech32_pattern = r'^bc1[a-zA-HJ-NP-Z0-9]{25,90}$'
+        
+        # いずれかのパターンに一致するか確認
+        return (re.match(p2pkh_pattern, address) is not None or
+                re.match(p2sh_pattern, address) is not None or
+                re.match(bech32_pattern, address) is not None)
     
     def get_transactions(self, address: str, start_datetime: Optional[datetime] = None,
                         end_datetime: Optional[datetime] = None, db: Session = None,
@@ -24,6 +44,13 @@ class BitcoinService(BlockchainService):
         """
         Bitcoinトランザクションの取得と処理
         """
+        # アドレスの検証
+        if not self.validate_bitcoin_address(address):
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid Bitcoin address format: {address}"
+            )
+            
         # データベースからキャッシュされたトランザクションを取得
         cached_transactions = []
         if db:

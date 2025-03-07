@@ -1,0 +1,143 @@
+# Blockchain Transaction Visualizer - Project Intelligence
+
+This file captures important patterns, preferences, and project intelligence that help me work more effectively with this project.
+
+## Project Patterns
+
+### Code Organization
+
+1. **Backend Structure**
+   - FastAPI routes are organized by functionality in the `app/api` directory
+   - Blockchain-specific logic is isolated in the `app/blockchain` directory
+   - Database models and operations are in the `app/database` directory
+   - Schema definitions for API requests/responses are in `app/schemas.py`
+
+2. **Frontend Structure**
+   - React components are organized by type in `frontend/src/components`
+   - Page components are in `frontend/src/pages`
+   - API service functions are in `frontend/src/services`
+   - Mock data for development is in `frontend/src/mockData`
+
+3. **API Patterns**
+   - All endpoints follow RESTful conventions
+   - Blockchain-specific endpoints include the blockchain name in the path
+   - Query parameters are used for filtering and pagination
+   - Consistent error response format across all endpoints
+
+### Development Workflow
+
+1. **Docker-First Development**
+   - Primary development environment is Docker-based
+   - Use `docker-compose up -d` to start the development environment
+   - Backend changes are automatically reloaded by FastAPI
+   - Frontend changes require container rebuild or volume mounting
+
+2. **Database Management**
+   - Database schema changes are managed through migration scripts
+   - `backend/app/database/reset_database.py` can be used to reset the database
+   - Test data can be generated using the notebook scripts
+
+3. **API Testing**
+   - FastAPI Swagger UI is available at `http://localhost:8000/docs`
+   - Jupyter notebooks in the `notebooks` directory are used for API testing
+   - BlockCypher and Etherscan API testing is documented in the notebooks
+
+## User Preferences
+
+1. **Documentation**
+   - Documentation is primarily in Japanese
+   - Code comments and variable names are in English
+   - Technical documentation is stored in the `docs` directory
+   - User-facing documentation should be bilingual (Japanese/English)
+
+2. **Code Style**
+   - Python: Follow PEP 8 guidelines
+   - JavaScript: Use ES6+ features, functional components for React
+   - Use descriptive variable and function names
+   - Include comments for complex logic
+
+3. **Commit Messages**
+   - Write commit messages in English
+   - Use present tense ("Add feature" not "Added feature")
+   - Reference issue numbers when applicable
+   - Include brief description of changes
+
+## Critical Implementation Paths
+
+1. **Transaction Retrieval Flow**
+   - User enters address in search form
+   - Frontend calls backend API with address and optional filters
+   - Backend checks database cache for existing data
+   - If not cached or expired, backend calls appropriate blockchain API
+   - Data is processed, stored in database, and returned to frontend
+   - Frontend renders transaction list and statistics
+
+2. **Network Visualization Flow**
+   - User requests network visualization for an address
+   - Frontend calls network API endpoint with address and depth parameter
+   - Backend retrieves transaction data for the address and related addresses
+   - Backend constructs network graph data structure
+   - Frontend renders network using D3.js force-directed graph
+   - User can interact with the graph (zoom, pan, click nodes)
+
+3. **Depth-Based Exploration**
+   - Depth parameter controls how many "hops" from the original address to explore
+   - Depth 1: Only direct transactions with the searched address
+   - Depth 2: Includes transactions of addresses that transacted with the searched address
+   - Depth 3: Extends another level to include transactions of those addresses
+   - Higher depths exponentially increase data volume and processing time
+
+## Known Challenges
+
+1. **API Rate Limits**
+   - BlockCypher: 3 requests/second, 200 requests/hour (free tier)
+   - Etherscan: 5 calls/second, 100,000 calls/day (free tier)
+   - Solution: Aggressive caching, request batching, and user feedback
+
+2. **Large Dataset Handling**
+   - Popular addresses can have thousands of transactions
+   - Network visualization becomes cluttered with too many nodes
+   - Solution: Pagination, filtering, and sampling for visualization
+
+3. **Cross-Blockchain Consistency**
+   - Bitcoin and Ethereum have different transaction models
+   - Data normalization is needed for consistent UI
+   - Some features may be blockchain-specific
+
+## Tool Usage Patterns
+
+1. **Docker Commands**
+   - Start all services: `docker-compose up -d`
+   - View logs: `docker-compose logs -f`
+   - Rebuild specific service: `docker-compose up -d --build <service>`
+   - Reset database: `docker-compose exec backend python app/database/reset_database.py`
+
+2. **Development Tools**
+   - VS Code with Python and JavaScript extensions
+   - Jupyter notebooks for API testing
+   - FastAPI Swagger UI for API documentation and testing
+   - React Developer Tools for frontend debugging
+
+3. **Debugging Approaches**
+   - Backend: Check FastAPI logs in Docker container
+   - Frontend: Use browser console and React Developer Tools
+   - API: Use Swagger UI to test endpoints directly
+   - Database: Connect to PostgreSQL using psql or a GUI tool
+
+## Project Evolution Notes
+
+1. **Initial Development (2024)**
+   - Basic transaction retrieval and display
+   - Simple network visualization
+   - Docker-based development environment
+
+2. **Current Focus (2025)**
+   - Depth-based transaction exploration
+   - Performance optimization for large networks
+   - Enhanced visualization capabilities
+
+3. **Future Directions**
+   - Time-series analysis
+   - Advanced filtering and search
+   - User accounts and saved searches
+   - Additional blockchain support
